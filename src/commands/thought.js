@@ -10,6 +10,13 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
+  if (interaction.user.id !== process.env.OWNER_ID) {
+    return interaction.reply({
+      content: "這個指令只有蒼太本人可以用喔 (｡•́︿•̀｡)",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   const text = interaction.options.getString("內容", true);
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
