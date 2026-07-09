@@ -70,19 +70,29 @@ export async function execute(interaction) {
     if (entries.length === 0) {
       return interaction.editReply("目前還沒有任何生日紀錄，用 `/生日 設定` 新增第一筆吧！");
     }
-    const lines = entries
-      .map(([userId, entry]) => ({
+    const byMonth = new Map();
+    for (const [userId, entry] of entries) {
+      if (!byMonth.has(entry.month)) byMonth.set(entry.month, []);
+      byMonth.get(entry.month).push({
         userId,
         entry,
         days: daysUntilNextBirthday(entry.month, entry.day),
-      }))
-      .sort((a, b) => a.days - b.days)
-      .map(({ userId, entry, days }) => {
-        const countdown = days === 0 ? "🎉 今天" : `還有 ${days} 天`;
-        return `\`${formatBirthday({ month: entry.month, day: entry.day })}\` <@${userId}>（${countdown}）`;
+      });
+    }
+    const sections = [...byMonth.keys()]
+      .sort((a, b) => a - b)
+      .map((month) => {
+        const people = byMonth
+          .get(month)
+          .sort((a, b) => a.entry.day - b.entry.day)
+          .map(({ userId, entry, days }) => {
+            const countdown = days === 0 ? "今天 🎉" : `還有 ${days} 天`;
+            return `\`${String(entry.day).padStart(2, "0")}日\` <@${userId}>（${countdown}）`;
+          });
+        return `**${month}月**\n${people.join("\n")}`;
       });
     return interaction.editReply({
-      content: `🎂 **生日列表**\n${lines.join("\n")}`,
+      content: `🎂 **生日列表**\n${sections.join("\n\n")}`,
       allowedMentions: { parse: [] },
     });
   }
